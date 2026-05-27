@@ -34,9 +34,19 @@
   ansible.builtin.set_fact:
     _sfc_matrix_candidates: "{{ _sfc_matrix_candidates | rejectattr('distribution', 'defined') | list + _sfc_matrix_candidates | selectattr('distribution', 'defined') | selectattr('distribution', 'equalto', ansible_distribution) | list }}"
 
-- name: "Resolve — pick the first entry whose kernel_regex matches the running kernel"
+- name: "Resolve — find candidate entries whose kernel_regex matches the running kernel"
   ansible.builtin.set_fact:
-    solarflare_matrix_match: "{{ (_sfc_matrix_candidates | selectattr('kernel_regex', 'defined') | selectattr('kernel_regex', 'match', ansible_kernel) | list | first) | default({}) }}"
+    _sfc_kernel_matches: "{{ _sfc_kernel_matches | default([]) + [item] }}"
+  loop: "{{ _sfc_matrix_candidates }}"
+  loop_control:
+    label: "{{ item.release | default('?') }}"
+  when:
+    - item.kernel_regex is defined
+    - ansible_kernel is regex(item.kernel_regex)
+
+- name: "Resolve — pick the first matching matrix entry"
+  ansible.builtin.set_fact:
+    solarflare_matrix_match: "{{ (_sfc_kernel_matches | default([]) | first) | default({}) }}"
 
 - name: "Resolve — warn if no matrix entry matched"
   ansible.builtin.debug:
