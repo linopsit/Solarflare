@@ -1,0 +1,25 @@
+---
+# Example playbook for the solarflare_update role
+#
+# Usage:
+#   ansible-playbook -i inventory site.yml -e solarflare_action=both
+
+- name: "Solarflare driver and firmware lifecycle"
+  hosts: solarflare_nics
+  become: true
+  gather_facts: true
+
+  roles:
+    - role: solarflare_update
+      vars:
+        solarflare_action: "both"               # none | driver | firmware | both
+        solarflare_update_all_kernels: true     # dracut for every installed kernel
+        solarflare_reboot_after_driver: false
+
+        # Driver source — pick ONE of the two:
+        solarflare_driver_rpm_url: ""           # e.g. https://repo.local/sfc-xxx.rpm
+        solarflare_driver_rpm_src: "/srv/pkg/kernel-module-sfc-RHEL8-5.3.14.1010-1.x86_64.rpm"
+
+        # Firmware
+        solarflare_firmware_image: "/opt/sf/firmware/SFA-bundle.dat"
+        solarflare_firmware_force: false
